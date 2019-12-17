@@ -13,12 +13,12 @@ order = api.model('Orders', {
     'name': fields.String(required=True, description='The name of the person who placed the order'),
     'amount': fields.String(required=True, description='The cost of the order'),
     'server': fields.String(required=True, description='The person who delivered the order'),
-    'date': fields.String(required=False, description="The Data when the order was placed")
+    'date': fields.String(required=True, description='The Data when the order was placed')
 })
 
 
-def get_timestamp():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# def get_timestamp():
+#     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 class OrderDAO(object):
@@ -35,15 +35,13 @@ class OrderDAO(object):
                 return order
         api.abort(404, "Order with Id {} doesn't exist".format(order_id))
 
-    def create(self, name, amount, server, date=None):
-        order['name'] = name
-        order['amount'] = amount
-        order['server'] = server
-        # TODO: Need to require a specific date format and pretify as needed.
-        if order['date']:
-            order['date'] = date
-        else:
-            order['date'] = get_timestamp()
+    def create(self, data):
+        order= data
+        order['name'] = data['name']
+        order['amount'] = data['amount']
+        order['server'] = data['server']
+        # # TODO: Need to require a specific date format and prettify as needed.
+        order['date'] = data['date']
         order['id'] = self.counter = self.counter + 1
 
         self.orders.append(order)
@@ -67,12 +65,35 @@ class OrderDAO(object):
 
 
 DAO = OrderDAO()
-DAO.create('Bob', '25.75', 'Leslie')
+DAO.create({'name': 'Bob', 'amount': '25.75', 'server': 'Leslie', 'date': 'today'})
+DAO.create({'name': 'Bob', 'amount': '25.75', 'server': 'Leslie', 'date': 'today'})
+# DAO.create('Linda', '105.00', 'Leslie')
+# DAO.create('Timothy', '10.50', 'Barb')
 
-@app.route('/')
-def hello_world():
-    return 'Hello World!'
+
+@ns.route('/')
+@ns.doc('Order Details')
+class Order(Resource):
+    """Shows a list of all the Orders and lets you add a new one"""
+
+    @ns.doc('Order List')
+    @ns.marshal_list_with(order)
+    def get(self):
+        """list of all orders"""
+        return DAO.orders
+
+    @ns.doc('create_order')
+    @ns.expect(order)
+    @ns.marshal_with(order, code=201)
+    def post(self):
+        """Create new order"""
+        return DAO.create(ns.payload), 201
+
+
+# @app.route('/')
+# def hello_world():
+#     return 'Hello World!'
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
