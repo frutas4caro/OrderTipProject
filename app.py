@@ -1,6 +1,5 @@
 from flask import Flask
 from flask_restplus import Api, Resource, fields
-from datetime import datetime
 
 
 app = Flask(__name__)
@@ -94,6 +93,6 @@ class Order(Resource):
 # def hello_world():
 #     return 'Hello World!'
 
-
 if __name__ == '__main__':
     app.run(debug=True)
+
